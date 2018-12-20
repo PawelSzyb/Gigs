@@ -1,6 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const path = require("path");
+const exphbs = require("express-handlebars");
 
 const db = require("./config/database");
 
@@ -13,6 +14,13 @@ app.use("/gigs", require("./routes/gigs"));
 db.authenticate()
   .then(() => console.log("connection established"))
   .catch(err => console.log("Something went wrong :" + err));
+
+// Handlebars
+app.engine("handlebars", exphbs({ defaultLayout: "main" }));
+app.set("view engine", "handlebars");
+
+// Set static folder
+app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/", (req, res) => {
   res.send("INDEX");
