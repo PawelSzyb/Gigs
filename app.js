@@ -7,6 +7,9 @@ const db = require("./config/database");
 
 const app = express();
 
+// bodyparser
+app.use(bodyParser.urlencoded({ extended: false }));
+
 // routes
 app.use("/gigs", require("./routes/gigs"));
 
@@ -23,7 +26,7 @@ app.set("view engine", "handlebars");
 app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/", (req, res) => {
-  res.send("INDEX");
+  res.render("index", { layout: "landing" });
 });
 
 const PORT = process.env.PORT || 5000;

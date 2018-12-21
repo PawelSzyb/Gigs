@@ -1,13 +1,14 @@
-const db = require("../config/database");
+// const db = require("../config/database");
 const Gig = require("../models/Gig");
+const gigValidation = require("../validations/gigValidation");
+const Sequelize = require("sequelize");
+const Op = Sequelize.Op;
 
 // Get gig list
 const getGigsListPage = (req, res) => {
   Gig.findAll()
     .then(gigs => {
-      res.render("gigs", {
-        gigs
-      });
+      res.render("gigs", { gigs });
     })
     .catch(err => console.log(err));
 };
@@ -19,30 +20,49 @@ const getAddGigPage = (req, res) => {
 
 // Add a gig
 const addGig = (req, res) => {
-  const data = {
-    title: "Looking for wordpress website",
-    technologies: "wordpress,php,html,css",
-    budget: "$1000",
-    description:
-      "Lorem ipsum dolor sit amet consectetur, adipisicing elit. Cupiditate voluptatibus atque recusandae excepturi perferendis doloribus, omnis aperiam ipsa aliquam quae eaque consequatur dignissimos inventore repellat ducimus nemo alias sapiente eligendi!",
-    contact_email: "johnboe@gmail.com"
-  };
+  let { title, technologies, description, contact_email } = req.body;
 
-  let { title, technologies, budget, description, contact_email } = data;
+  const { budget, errors, isValid } = gigValidation(req.body);
+  console.log(isValid);
+  if (!isValid) {
+    res.render("add", {
+      errors,
+      title,
+      technologies,
+      budget,
+      description,
+      contact_email
+    });
+  } else {
+    technologies = technologies.toLowerCase().replace(/, /g, ",");
 
-  Gig.create({
-    title,
-    technologies,
-    budget,
-    description,
-    contact_email
-  })
-    .then(() => res.redirect("/gigs"))
+    Gig.create({
+      title,
+      technologies,
+      budget,
+      description,
+      contact_email
+    })
+      .then(() => res.redirect("/gigs"))
+      .catch(err => console.log(err));
+  }
+};
+
+// Search for a gig
+const searchGig = (req, res) => {
+  let { term } = req.query;
+
+  // Make sure term is lowercase
+  term = term.toLowerCase();
+
+  Gig.findAll({ where: { technologies: { [Op.like]: `%${term}%` } } })
+    .then(gigs => res.render("gigs", { gigs }))
     .catch(err => console.log(err));
 };
 
 module.exports = {
   getGigsListPage,
   addGig,
-  getAddGigPage
+  getAddGigPage,
+  searchGig
 };
